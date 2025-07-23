@@ -32,6 +32,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="8.0.10" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+    <PackageReference Include="Npgsql" Version="9.0.3" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MultitenantPOS.Module\MultitenantPOS.Module.csproj" />

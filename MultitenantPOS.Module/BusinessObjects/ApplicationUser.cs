@@ -33,6 +33,8 @@ public class ApplicationUser : PermissionPolicyUser, ISecurityUserWithLoginInfo,
         get { return GetCollection<ApplicationUserLoginInfo>(nameof(LoginInfo)); }
     }
 
+    
+
     IEnumerable<ISecurityUserLoginInfo> IOAuthSecurityUser.UserLogins => LoginInfo.OfType<ISecurityUserLoginInfo>();
 
     ISecurityUserLoginInfo ISecurityUserWithLoginInfo.CreateUserLoginInfo(string loginProviderName, string providerUserKey) {
