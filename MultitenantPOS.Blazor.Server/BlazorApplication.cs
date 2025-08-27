@@ -1,19 +1,21 @@
 ﻿using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.ApplicationBuilder;
 using DevExpress.ExpressApp.Blazor;
+using DevExpress.ExpressApp.MultiTenancy;
 using DevExpress.ExpressApp.Security;
 using DevExpress.ExpressApp.Security.ClientServer;
 using DevExpress.ExpressApp.SystemModule;
 using DevExpress.ExpressApp.Xpo;
-using MultitenantPOS.Blazor.Server.Services;
-using DevExpress.ExpressApp.MultiTenancy;
+using DevExpress.Persistent.BaseImpl.MultiTenancy;
 using Microsoft.Extensions.DependencyInjection;
+using MultitenantPOS.Blazor.Server.Services;
+using MultitenantPOS.Module.BusinessObjects;
 
 namespace MultitenantPOS.Blazor.Server;
 
 public class MultitenantPOSBlazorApplication : BlazorApplication {
     public MultitenantPOSBlazorApplication() {
-        ApplicationName = "MultitenantPOS";
+        ApplicationName = "POS";
         CheckCompatibilityType = DevExpress.ExpressApp.CheckCompatibilityType.DatabaseSchema;
         DatabaseVersionMismatch += MultitenantPOSBlazorApplication_DatabaseVersionMismatch;
     }
@@ -47,6 +49,38 @@ public class MultitenantPOSBlazorApplication : BlazorApplication {
             throw new InvalidOperationException(message);
         }
 #endif
+    }
+    protected override void OnLoggedOn(LogonEventArgs args)
+    {
+        base.OnLoggedOn(args);
+
+        // Get the current tenant name via the ITenantProvider service
+        var tenantProvider = ServiceProvider.GetRequiredService<ITenantProvider>();
+        string tenantName = tenantProvider.TenantName;
+
+        if (!string.IsNullOrEmpty(tenantName))
+        {
+            // Set the application title dynamically (updates browser tab and other UI elements)
+            this.Title = $"{tenantName} POS";
+        }
+    }
+    private string GetCurrentCompanyName()
+    {
+        try
+        {
+            var tenantProvider = ServiceProvider?.GetService<ITenantProvider>();
+            if (tenantProvider?.TenantId == null) return "POS";
+
+            using (var objectSpace = CreateObjectSpace())
+            {
+                var tenant = objectSpace.GetObjectByKey<Tenant>(tenantProvider.TenantId);
+                return tenant?.Name ?? "POS";
+            }
+        }
+        catch
+        {
+            return "POS"; // Fallback
+        }
     }
     Guid? TenantId {
         get {

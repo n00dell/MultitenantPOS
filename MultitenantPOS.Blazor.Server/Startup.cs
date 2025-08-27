@@ -10,6 +10,7 @@ using MultitenantPOS.Blazor.Server.Services;
 using DevExpress.Persistent.BaseImpl.PermissionPolicy;
 using DevExpress.ExpressApp.MultiTenancy;
 using Microsoft.Extensions.DependencyInjection;
+using MultitenantPOS.Module.BusinessObjects;
 
 namespace MultitenantPOS.Blazor.Server;
 
@@ -26,9 +27,13 @@ public class Startup {
         services.AddSingleton(typeof(Microsoft.AspNetCore.SignalR.HubConnectionHandler<>), typeof(ProxyHubConnectionHandler<>));
 
         services.AddRazorPages();
+        services.AddMemoryCache();
+        services.AddResponseCaching();
         services.AddServerSideBlazor();
         services.AddHttpContextAccessor();
         services.AddScoped<CircuitHandler, CircuitHandlerProxy>();
+        services.AddScoped<ITenantUIService, TenantUIService>();
+        
         services.AddXaf(Configuration, builder => {
             builder.UseApplication<MultitenantPOSBlazorApplication>();
             builder.Modules
@@ -58,6 +63,7 @@ public class Startup {
                 .Add<MultitenantPOSBlazorModule>();
 
             builder.AddMultiTenancy()
+            .WithCustomTenantType<TenantExtended>()
                 .WithHostDatabaseConnectionString(Configuration.GetConnectionString("ConnectionString"))
 #if EASYTEST
                 .WithHostDatabaseConnectionString(Configuration.GetConnectionString("EasyTestConnectionString"))
@@ -69,6 +75,8 @@ public class Startup {
                 })
                 .WithTenantResolver<TenantByEmailResolver>();
 
+           
+
             builder.ObjectSpaceProviders
                 .AddSecuredXpo((serviceProvider, options) => {
                     string connectionString = serviceProvider.GetRequiredService<IConnectionStringProvider>().GetConnectionString();
@@ -77,6 +85,7 @@ public class Startup {
                     options.UseSharedDataStoreProvider = true;
                 })
                 .AddNonPersistent();
+            
             builder.Security
                 .UseIntegratedMode(options => {
                     options.Lockout.Enabled = true;
@@ -130,6 +139,7 @@ public class Startup {
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseResponseCaching();
         app.UseXaf();
         app.UseEndpoints(endpoints => {
             endpoints.MapXafEndpoints();

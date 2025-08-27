@@ -1,4 +1,5 @@
 ﻿using DevExpress.ExpressApp;
+using DevExpress.ExpressApp.Model;
 using DevExpress.Persistent.Base;
 using DevExpress.Xpo;
 
@@ -24,12 +25,22 @@ namespace MultitenantPOS.Module.BusinessObjects.Common
             if (Session.IsNewObject(this))
             {
                 CreatedOn = DateTime.Now;
-                CreatedBy = SecuritySystem.CurrentUser as ApplicationUser;
+                var currentUser = SecuritySystem.CurrentUser as ApplicationUser;
+                if (currentUser != null && currentUser.Session != Session)
+                {
+                    currentUser = Session.GetObjectByKey<ApplicationUser>(currentUser.Oid);
+                }
+                CreatedBy = currentUser;
             }
             else
             {
                 AlteredOn = DateTime.Now;
-                AlteredBy = SecuritySystem.CurrentUser as ApplicationUser;
+                var currentUser = SecuritySystem.CurrentUser as ApplicationUser;
+                if (currentUser != null && currentUser.Session != Session)
+                {
+                    currentUser = Session.GetObjectByKey<ApplicationUser>(currentUser.Oid);
+                }
+                AlteredBy = currentUser;
             }
         }
 
@@ -40,41 +51,55 @@ namespace MultitenantPOS.Module.BusinessObjects.Common
         ApplicationUser createdBy;
         int id;
 
+        [Key(AutoGenerate = true)]
+        [VisibleInDetailView(false)]
+        [VisibleInListView(false)]
+        [VisibleInLookupListView(false)]
         public int Id
         {
             get => id;
             set => SetPropertyValue(nameof(Id), ref id, value);
         }
 
-
+        [VisibleInDetailView(false)]
+        [VisibleInListView(false)]
+        [VisibleInLookupListView(false)]
         public ApplicationUser CreatedBy
         {
             get => createdBy;
             set => SetPropertyValue(nameof(CreatedBy), ref createdBy, value);
         }
 
-
+        [VisibleInDetailView(false)]
+        [VisibleInListView(false)]
+        [VisibleInLookupListView(false)]
         public DateTime CreatedOn
         {
             get => createdOn;
             set => SetPropertyValue(nameof(CreatedOn), ref createdOn, value);
         }
 
-
+        [VisibleInDetailView(false)]
+        [VisibleInListView(false)]
+        [VisibleInLookupListView(false)]
         public ApplicationUser AlteredBy
         {
             get => alteredBy;
             set => SetPropertyValue(nameof(AlteredBy), ref alteredBy, value);
         }
 
-
+        [VisibleInDetailView(false)]
+        [VisibleInListView(false)]
+        [VisibleInLookupListView(false)]
         public DateTime AlteredOn
         {
             get => alteredOn;
             set => SetPropertyValue(nameof(AlteredOn), ref alteredOn, value);
         }
 
-        
+        [VisibleInDetailView(false)]
+        [VisibleInListView(false)]
+        [VisibleInLookupListView(false)]
         public DateTime Dola
         {
             get => dola;

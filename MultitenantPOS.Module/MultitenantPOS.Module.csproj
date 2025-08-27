@@ -9,9 +9,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Images\company1_logo.png" />
+    <None Remove="Images\puzzle.png" />
+    <None Remove="Images\vecteezy_vector-illustration-of-jigsaw-puzzle_14874373.svg" />
     <None Remove="Model.DesignedDiffs.xafml" />
   </ItemGroup>
   <ItemGroup>
+	  <EmbeddedResource Include="Images\company1_logo.png" />
+	  <EmbeddedResource Include="Images\vecteezy_vector-illustration-of-jigsaw-puzzle_14874373.svg">
+		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>  
+	  </EmbeddedResource>
+    <EmbeddedResource Include="Images\puzzle.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Model.DesignedDiffs.xafml" />
   </ItemGroup>
   <ItemGroup>
@@ -43,7 +53,21 @@
     <PackageReference Include="DevExpress.Persistent.BaseImpl.Xpo" Version="24.2.7" />
     <PackageReference Include="Azure.Identity" Version="1.13.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Npgsql" Version="9.0.3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

@@ -1,28 +1,44 @@
-﻿using DevExpress.ExpressApp;
-using DevExpress.Data.Filtering;
-using DevExpress.Persistent.Base;
-using DevExpress.ExpressApp.Updating;
-using DevExpress.ExpressApp.Security;
-using DevExpress.ExpressApp.SystemModule;
+﻿using DevExpress.Data.Filtering;
+using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.MultiTenancy;
+using DevExpress.ExpressApp.Security;
 using DevExpress.ExpressApp.Security.Strategy;
-using DevExpress.Xpo;
+using DevExpress.ExpressApp.SystemModule;
+using DevExpress.ExpressApp.Updating;
 using DevExpress.ExpressApp.Xpo;
+using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl;
 using DevExpress.Persistent.BaseImpl.MultiTenancy;
 using DevExpress.Persistent.BaseImpl.PermissionPolicy;
-using MultitenantPOS.Module.BusinessObjects;
+using DevExpress.Xpo;
 using Microsoft.Extensions.DependencyInjection;
+using MultitenantPOS.Module.BusinessObjects;
+using MultitenantPOS.Module.BusinessObjects.Common;
+using System.Security.AccessControl;
 
 namespace MultitenantPOS.Module.DatabaseUpdate;
 
-// For more typical usage scenarios, be sure to check out https://docs.devexpress.com/eXpressAppFramework/DevExpress.ExpressApp.Updating.ModuleUpdater
 public class Updater : ModuleUpdater {
     public Updater(IObjectSpace objectSpace, Version currentDBVersion) :
         base(objectSpace, currentDBVersion) {
     }
     public override void UpdateDatabaseAfterUpdateSchema() {
         base.UpdateDatabaseAfterUpdateSchema();
+
+        System.Diagnostics.Debug.WriteLine("UpdateDatabaseAfterUpdateSchema started");
+
+        // Seed currencies first - this should work regardless of tenant
+        try
+        {
+            SeedCurrencies();
+            System.Diagnostics.Debug.WriteLine("SeedCurrencies completed");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"SeedCurrencies failed: {ex.Message}");
+            // Don't throw here, let other seeding continue
+        }
+
         //string name = "MyName";
         //DomainObject1 theObject = ObjectSpace.FirstOrDefault<DomainObject1>(u => u.Name == name);
         //if(theObject == null) {
@@ -35,17 +51,14 @@ public class Updater : ModuleUpdater {
 
 #if !RELEASE
         if (TenantName == null) {
-            _ = CreateTenant("company1.com", "MultitenantPOS_company1");
-            _ = CreateTenant("company2.com", "MultitenantPOS_company2");
+            _ = CreateTenant("company1.com", "MultitenantPOS_company1", "MultitenantPOS.Module.Images.company1_logo.png");
+            _ = CreateTenant("company2.com", "MultitenantPOS_company2", "MultitenantPOS.Module.Images.company1_logo.png");
             ObjectSpace.CommitChanges();
         }
 #endif
 
-        // The code below creates users and roles for testing purposes only.
-        // In production code, you can create users and assign roles to them automatically, as described in the following help topic:
-        // https://docs.devexpress.com/eXpressAppFramework/119064/data-security-and-safety/security-system/authentication
+        
 #if !RELEASE
-        // If a role doesn't exist in the database, create this role
         var adminRole = CreateAdminRole();
 
         UserManager userManager = ObjectSpace.ServiceProvider.GetRequiredService<UserManager>();
@@ -103,12 +116,16 @@ public class Updater : ModuleUpdater {
         //    RenameColumn("DomainObject1Table", "OldColumnName", "NewColumnName");
         //}
     }
-    private Tenant CreateTenant(string tenantName, string databaseName) {
-        var tenant = ObjectSpace.FirstOrDefault<Tenant>(t => t.Name == tenantName);
+    private Tenant CreateTenant(string tenantName, string databaseName, string logoResourceName = null) {
+        var tenant = ObjectSpace.FirstOrDefault<TenantExtended>(t => t.Name == tenantName);
         if (tenant == null) {
-            tenant = ObjectSpace.CreateObject<Tenant>();
+            tenant = ObjectSpace.CreateObject<TenantExtended>();
             tenant.Name = tenantName;
             tenant.ConnectionString = $"Integrated Security=SSPI;Pooling=false;Data Source=(local);Initial Catalog={databaseName}";
+            if (!string.IsNullOrEmpty(logoResourceName))
+            {
+                tenant.Logo = CreateLogoFromEmbeddedResource(logoResourceName, tenantName);
+            }
         }
         return tenant;
     }
@@ -142,7 +159,31 @@ public class Updater : ModuleUpdater {
         }
         return defaultRole;
     }
+    private FileData CreateLogoFromEmbeddedResource(string resourceName, string tenantName)
+    {
+        try
+        {
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream != null)
+                {
+                    var logoData = new byte[stream.Length];
+                    stream.Read(logoData, 0, logoData.Length);
 
+                    var fileData = ObjectSpace.CreateObject<FileData>();
+                    fileData.LoadFromStream($"{tenantName}_logo.png", stream);
+                    return fileData;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log the exception if needed
+            System.Diagnostics.Debug.WriteLine($"Failed to load logo resource {resourceName}: {ex.Message}");
+        }
+        return null;
+    }
     Guid? TenantId {
         get {
             return ObjectSpace.ServiceProvider.GetRequiredService<ITenantProvider>().TenantId;
@@ -153,4 +194,250 @@ public class Updater : ModuleUpdater {
             return ObjectSpace.ServiceProvider.GetRequiredService<ITenantProvider>().TenantName;
         }
     }
+    private void SeedCurrencies()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("Starting SeedCurrencies method...");
+
+            // Check if we can instantiate Currency objects
+            if (!ObjectSpace.CanInstantiate(typeof(Currency)))
+            {
+                System.Diagnostics.Debug.WriteLine("Cannot instantiate Currency objects - permissions issue");
+                return;
+            }
+
+            var currencies = new List<(string Code, string Name, string Symbol)>
+        {
+            ("USD", "United States Dollar", "$"),
+            ("EUR", "Euro", "€"),
+            ("GBP", "British Pound Sterling", "£"),
+            ("JPY", "Japanese Yen", "¥"),
+            ("AUD", "Australian Dollar", "A$"),
+            ("CAD", "Canadian Dollar", "C$"),
+            ("CHF", "Swiss Franc", "CHF"),
+            ("CNY", "Chinese Yuan", "¥"),
+            ("INR", "Indian Rupee", "₹"),
+            ("BRL", "Brazilian Real", "R$"),
+            ("MXN", "Mexican Peso", "$"),
+            ("RUB", "Russian Ruble", "₽"),
+            ("KRW", "South Korean Won", "₩"),
+            ("TRY", "Turkish Lira", "₺"),
+            ("ZAR", "South African Rand", "R"),
+            ("SEK", "Swedish Krona", "kr"),
+            ("NZD", "New Zealand Dollar", "NZ$"),
+            ("NOK", "Norwegian Krone", "kr"),
+            ("DKK", "Danish Krone", "kr"),
+            ("SGD", "Singapore Dollar", "S$"),
+            ("HKD", "Hong Kong Dollar", "HK$"),
+            ("MYR", "Malaysian Ringgit", "RM"),
+            ("THB", "Thai Baht", "฿"),
+            ("IDR", "Indonesian Rupiah", "Rp"),
+            ("PHP", "Philippine Peso", "₱"),
+            ("ILS", "Israeli New Shekel", "₪"),
+            ("AED", "United Arab Emirates Dirham", "د.إ"),
+            ("SAR", "Saudi Riyal", "﷼"),
+            ("PLN", "Polish Złoty", "zł"),
+            ("HUF", "Hungarian Forint", "Ft"),
+            ("CZK", "Czech Koruna", "Kč"),
+            ("CLP", "Chilean Peso", "$"),
+            ("ARS", "Argentine Peso", "$"),
+            ("COP", "Colombian Peso", "$"),
+            ("PEN", "Peruvian Sol", "S/"),
+            ("VND", "Vietnamese Dong", "₫"),
+            ("UAH", "Ukrainian Hryvnia", "₴"),
+            ("RON", "Romanian Leu", "lei"),
+            ("BGN", "Bulgarian Lev", "лв"),
+            ("HRK", "Croatian Kuna", "kn"),
+            ("ISK", "Icelandic Króna", "kr"),
+            ("RSD", "Serbian Dinar", "дин"),
+            ("EGP", "Egyptian Pound", "£"),
+            ("NGN", "Nigerian Naira", "₦"),
+            ("MAD", "Moroccan Dirham", "د.م."),
+            ("DZD", "Algerian Dinar", "د.ج"),
+            ("TND", "Tunisian Dinar", "د.ت"),
+            ("QAR", "Qatari Riyal", "ر.ق"),
+            ("KWD", "Kuwaiti Dinar", "د.ك"),
+            ("OMR", "Omani Rial", "ر.ع."),
+            ("BHD", "Bahraini Dinar", ".د.ب"),
+            ("JOD", "Jordanian Dinar", "د.ا"),
+            ("LBP", "Lebanese Pound", "ل.ل"),
+            ("PKR", "Pakistani Rupee", "₨"),
+            ("BDT", "Bangladeshi Taka", "৳"),
+            ("LKR", "Sri Lankan Rupee", "Rs"),
+            ("NPR", "Nepalese Rupee", "₨"),
+            ("MMK", "Myanmar Kyat", "K"),
+            ("KHR", "Cambodian Riel", "៛"),
+            ("LAK", "Laotian Kip", "₭"),
+            ("MNT", "Mongolian Tögrög", "₮"),
+            ("BND", "Brunei Dollar", "B$"),
+            ("FJD", "Fijian Dollar", "FJ$"),
+            ("PGK", "Papua New Guinean Kina", "K"),
+            ("SBD", "Solomon Islands Dollar", "SI$"),
+            ("TOP", "Tongan Paʻanga", "T$"),
+            ("VUV", "Vanuatu Vatu", "VT"),
+            ("WST", "Samoan Tala", "T"),
+            ("XPF", "CFP Franc", "₣"),
+            ("XAF", "Central African CFA Franc", "FCFA"),
+            ("XOF", "West African CFA Franc", "CFA"),
+            ("XCD", "East Caribbean Dollar", "EC$"),
+            ("ANG", "Netherlands Antillean Guilder", "ƒ"),
+            ("AWG", "Aruban Florin", "ƒ"),
+            ("BBD", "Barbadian Dollar", "Bds$"),
+            ("BMD", "Bermudian Dollar", "BD$"),
+            ("BZD", "Belize Dollar", "BZ$"),
+            ("CUC", "Cuban Convertible Peso", "CUC$"),
+            ("CUP", "Cuban Peso", "$"),
+            ("DOP", "Dominican Peso", "RD$"),
+            ("GTQ", "Guatemalan Quetzal", "Q"),
+            ("HNL", "Honduran Lempira", "L"),
+            ("JMD", "Jamaican Dollar", "J$"),
+            ("NIO", "Nicaraguan Córdoba", "C$"),
+            ("PAB", "Panamanian Balboa", "B/."),
+            ("PYG", "Paraguayan Guaraní", "₲"),
+            ("TTD", "Trinidad and Tobago Dollar", "TT$"),
+            ("UYU", "Uruguayan Peso", "$U"),
+            ("VES", "Venezuelan Bolívar", "Bs."),
+            ("CRC", "Costa Rican Colón", "₡"),
+            ("SVC", "Salvadoran Colón", "₡"),
+            ("GHS", "Ghanaian Cedi", "₵"),
+            ("KES", "Kenyan Shilling", "KSh"),
+            ("TZS", "Tanzanian Shilling", "TSh"),
+            ("UGX", "Ugandan Shilling", "USh"),
+            ("ETB", "Ethiopian Birr", "Br"),
+            ("MUR", "Mauritian Rupee", "₨"),
+            ("SCR", "Seychellois Rupee", "₨"),
+            ("MVR", "Maldivian Rufiyaa", "Rf"),
+            ("CDF", "Congolese Franc", "FC"),
+            ("GMD", "Gambian Dalasi", "D"),
+            ("GNF", "Guinean Franc", "FG"),
+            ("LRD", "Liberian Dollar", "L$"),
+            ("SLL", "Sierra Leonean Leone", "Le"),
+            ("SOS", "Somali Shilling", "Sh"),
+            ("SDG", "Sudanese Pound", "ج.س."),
+            ("TND", "Tunisian Dinar", "د.ت"),
+            ("DZD", "Algerian Dinar", "د.ج"),
+            ("LYD", "Libyan Dinar", "ل.د"),
+            ("ERN", "Eritrean Nakfa", "Nfk"),
+            ("SHP", "Saint Helena Pound", "£"),
+            ("SSP", "South Sudanese Pound", "£"),
+            ("STN", "São Tomé and Príncipe Dobra", "Db"),
+            ("CVE", "Cape Verdean Escudo", "Esc"),
+            ("KMF", "Comorian Franc", "CF"),
+            ("DJF", "Djiboutian Franc", "Fdj"),
+            ("RWF", "Rwandan Franc", "FRw"),
+            ("BIF", "Burundian Franc", "FBu"),
+            ("MWK", "Malawian Kwacha", "MK"),
+            ("ZMW", "Zambian Kwacha", "ZK"),
+            ("ZWL", "Zimbabwean Dollar", "Z$"),
+            ("NAD", "Namibian Dollar", "N$"),
+            ("LSL", "Lesotho Loti", "L"),
+            ("SZL", "Swazi Lilangeni", "E"),
+            ("BWP", "Botswana Pula", "P"),
+            ("MOP", "Macanese Pataca", "MOP$"),
+            ("KZT", "Kazakhstani Tenge", "₸"),
+            ("UZS", "Uzbekistani Som", "so'm"),
+            ("TJS", "Tajikistani Somoni", "SM"),
+            ("TMT", "Turkmenistan Manat", "m"),
+            ("AZN", "Azerbaijani Manat", "₼"),
+            ("GEL", "Georgian Lari", "₾"),
+            ("AMD", "Armenian Dram", "֏"),
+            ("BYN", "Belarusian Ruble", "Br"),
+            ("MDL", "Moldovan Leu", "L"),
+            ("ALL", "Albanian Lek", "L"),
+            ("MKD", "Macedonian Denar", "ден"),
+            ("GIP", "Gibraltar Pound", "£"),
+            ("FKP", "Falkland Islands Pound", "£"),
+            ("IMP", "Manx Pound", "£"),
+            ("JEP", "Jersey Pound", "£"),
+            ("GGP", "Guernsey Pound", "£"),
+            ("BTC", "Bitcoin", "₿"),
+            ("ETH", "Ethereum", "Ξ"),
+            ("LTC", "Litecoin", "Ł"),
+            ("XRP", "Ripple", "XRP"),
+            ("BCH", "Bitcoin Cash", "BCH"),
+            ("BNB", "Binance Coin", "BNB"),
+            ("ADA", "Cardano", "ADA"),
+            ("DOT", "Polkadot", "DOT"),
+            ("XAU", "Gold Ounce", "XAU"),
+            ("XAG", "Silver Ounce", "XAG"),
+            ("XPT", "Platinum Ounce", "XPT"),
+            ("XPD", "Palladium Ounce", "XPD"),
+            ("AOA", "Angolan Kwanza", "Kz"),
+            ("BSD", "Bahamian Dollar", "B$"),
+            ("BTN", "Bhutanese Ngultrum", "Nu."),
+            ("CKD", "Cook Islands Dollar", "$"),
+            ("ERN", "Eritrean Nakfa", "Nfk"),
+            ("GEL", "Georgian Lari", "₾"),
+            ("GHS", "Ghanaian Cedi", "₵"),
+            ("GIP", "Gibraltar Pound", "£"),
+            ("HTG", "Haitian Gourde", "G"),
+            ("IQD", "Iraqi Dinar", "ع.د"),
+            ("IRR", "Iranian Rial", "﷼"),
+            ("KGS", "Kyrgyzstani Som", "с"),
+            ("KYD", "Cayman Islands Dollar", "CI$"),
+            ("MZN", "Mozambican Metical", "MT"),
+            ("PEN", "Peruvian Sol", "S/"),
+            ("SYP", "Syrian Pound", "£S"),
+            ("TWD", "New Taiwan Dollar", "NT$"),
+            ("UYW", "Uruguayan Nominal Wage Index Unit", "UYW"),
+            ("YER", "Yemeni Rial", "﷼"),
+            ("ZMW", "Zambian Kwacha", "ZK")
+            // Using just 10 currencies for testing - add more later once this works
+        };
+
+            System.Diagnostics.Debug.WriteLine($"Defined {currencies.Count} currencies");
+
+            // Get existing currencies with detailed logging
+            var existingCurrencies = ObjectSpace.GetObjects<Currency>().ToList();
+            System.Diagnostics.Debug.WriteLine($"Found {existingCurrencies.Count} existing currencies in database");
+
+            foreach (var existing in existingCurrencies)
+            {
+                System.Diagnostics.Debug.WriteLine($"Existing: {existing.Code} - {existing.Name}");
+            }
+
+            var existingCodes = existingCurrencies.Select(c => c.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            int createdCount = 0;
+
+            // Create new currencies that don't exist
+            foreach (var currency in currencies)
+            {
+                if (!existingCodes.Contains(currency.Code))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Creating currency: {currency.Code} - {currency.Name}");
+
+                    var newCurrency = ObjectSpace.CreateObject<Currency>();
+                    newCurrency.Code = currency.Code;
+                    newCurrency.Name = currency.Name;
+                    newCurrency.Symbol = currency.Symbol;
+
+                    createdCount++;
+                    System.Diagnostics.Debug.WriteLine($"Created currency object: {newCurrency.Code}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Currency {currency.Code} already exists, skipping");
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Created {createdCount} new currencies, committing changes...");
+
+            ObjectSpace.CommitChanges();
+
+            System.Diagnostics.Debug.WriteLine("CommitChanges completed successfully");
+
+            // Verify the data was actually saved
+            var finalCount = ObjectSpace.GetObjects<Currency>().Count();
+            System.Diagnostics.Debug.WriteLine($"Final currency count in database: {finalCount}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error in SeedCurrencies: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            throw; // Re-throw to see the error in your application
+        }
+    }
 }
+

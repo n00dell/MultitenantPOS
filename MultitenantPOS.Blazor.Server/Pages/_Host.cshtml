@@ -11,7 +11,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
     <meta name="mobile-web-app-capable" content="yes" />
     <!-- meta name="theme-color" content="#000000" -->
-    <title>MultitenantPOS</title>
+    @inject MultitenantPOS.Blazor.Server.Services.ITenantUIService TenantUIService
+    @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+    <title>@(TenantUIService?.GetSplashCaption(HttpContextAccessor?.HttpContext!) ?? "MultitenantPOS")</title>
     <base href="~/" />
     <component type="typeof(BootstrapThemeLink)" render-mode="Static" />
 </head>
@@ -20,7 +22,8 @@
         string userAgent = Request.Headers["User-Agent"];
         bool isIE = userAgent.Contains("MSIE") || userAgent.Contains("Trident");
     }
-    @if(isIE) {
+    @if (isIE)
+    {
         <link href="css/site.css" rel="stylesheet" />
         <div class="d-flex flex-column justify-content-center align-items-center h-100">
             <div class="d-flex">
@@ -33,10 +36,11 @@
         </div>
     }
     else {
-        <component type="typeof(SplashScreen)" render-mode="Static" param-Caption='"MultitenantPOS"' param-ImagePath='"images/SplashScreen.svg"' />
+        <component type="typeof(SplashScreen)" render-mode="Static" param-Caption='@TenantUIService.GetSplashCaption(HttpContextAccessor?.HttpContext!)' param-ImagePath='"images/SplashScreen.svg"' />
 
         <link href="_content/DevExpress.ExpressApp.Blazor/styles.css" asp-append-version="true" rel="stylesheet" />
         <link href="css/site.css" rel="stylesheet" />
+
         // Uncomment this link to enable CSS isolation. For more information, refer to the following topic: https://learn.microsoft.com/en-us/aspnet/core/blazor/components/css-isolation
         //<link href="MultitenantPOS.Blazor.Server.styles.css" rel="stylesheet">
 

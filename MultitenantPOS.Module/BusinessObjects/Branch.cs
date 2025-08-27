@@ -6,19 +6,20 @@ using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl;
 using DevExpress.Persistent.Validation;
 using DevExpress.Xpo;
+using MultitenantPOS.Module.BusinessObjects.Common;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
-namespace MultitenantPOS.Module.BusinessObjects.Common
+namespace MultitenantPOS.Module.BusinessObjects
 {
     [DefaultClassOptions]
-    
-    public class Category : BaseClassWithKeys
-    {
-        public Category(Session session)
+
+    public class Branch : BaseClassWithKeys
+    { 
+        public Branch(Session session)
             : base(session)
         {
         }
@@ -28,6 +29,7 @@ namespace MultitenantPOS.Module.BusinessObjects.Common
         }
 
 
+        string address;
         string name;
 
         [Size(SizeAttribute.DefaultStringMappingFieldSize)]
@@ -37,14 +39,12 @@ namespace MultitenantPOS.Module.BusinessObjects.Common
             set => SetPropertyValue(nameof(Name), ref name, value);
         }
 
-        [Association("Category-Products")]
-        public XPCollection<Product> Products
+        
+        [Size(SizeAttribute.DefaultStringMappingFieldSize)]
+        public string Address
         {
-            get
-            {
-                return GetCollection<Product>(nameof(Products));
-            }
+            get => address;
+            set => SetPropertyValue(nameof(Address), ref address, value);
         }
-
     }
 }

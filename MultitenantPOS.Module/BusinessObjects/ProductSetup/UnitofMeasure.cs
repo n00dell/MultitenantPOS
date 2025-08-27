@@ -6,13 +6,14 @@ using DevExpress.Persistent.Base;
 using DevExpress.Persistent.BaseImpl;
 using DevExpress.Persistent.Validation;
 using DevExpress.Xpo;
+using MultitenantPOS.Module.BusinessObjects.Common;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
-namespace MultitenantPOS.Module.BusinessObjects.Common
+namespace MultitenantPOS.Module.BusinessObjects.ProductSetup
 {
     [DefaultClassOptions]
    
@@ -26,6 +27,15 @@ namespace MultitenantPOS.Module.BusinessObjects.Common
         {
             base.AfterConstruction();
         }
-        
+
+
+        string name;
+
+        [Size(SizeAttribute.DefaultStringMappingFieldSize)]
+        public string Name
+        {
+            get => name;
+            set => SetPropertyValue(nameof(Name), ref name, value);
+        }
     }
 }

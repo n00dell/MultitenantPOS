@@ -10,31 +10,39 @@ namespace MultitenantPOS.Module.BusinessObjects;
 [MapInheritance(MapInheritanceType.ParentTable)]
 [DefaultProperty(nameof(UserName))]
 public class ApplicationUser : PermissionPolicyUser, ISecurityUserWithLoginInfo, ISecurityUserLockout {
+    Branch branch;
     private int accessFailedCount;
     private DateTime lockoutEnd;
 
     public ApplicationUser(Session session) : base(session) { }
 
     [Browsable(false)]
-    public int AccessFailedCount {
+    public int AccessFailedCount
+    {
         get { return accessFailedCount; }
         set { SetPropertyValue(nameof(AccessFailedCount), ref accessFailedCount, value); }
     }
 
     [Browsable(false)]
-    public DateTime LockoutEnd {
+    public DateTime LockoutEnd
+    {
         get { return lockoutEnd; }
         set { SetPropertyValue(nameof(LockoutEnd), ref lockoutEnd, value); }
     }
 
     [Browsable(false)]
     [Aggregated, Association("User-LoginInfo")]
-    public XPCollection<ApplicationUserLoginInfo> LoginInfo {
+    public XPCollection<ApplicationUserLoginInfo> LoginInfo
+    {
         get { return GetCollection<ApplicationUserLoginInfo>(nameof(LoginInfo)); }
     }
 
-    
-
+ 
+    public Branch Branch
+    {
+        get => branch;
+        set => SetPropertyValue(nameof(Branch), ref branch, value);
+    }
     IEnumerable<ISecurityUserLoginInfo> IOAuthSecurityUser.UserLogins => LoginInfo.OfType<ISecurityUserLoginInfo>();
 
     ISecurityUserLoginInfo ISecurityUserWithLoginInfo.CreateUserLoginInfo(string loginProviderName, string providerUserKey) {

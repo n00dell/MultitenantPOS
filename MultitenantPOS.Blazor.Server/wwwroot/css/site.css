@@ -9,16 +9,26 @@ app {
 
 .header-logo {
     flex-shrink: 0;
-    background-color: currentColor;
-    -webkit-mask: url('../images/Logo.svg');
-    mask: url('../images/Logo.svg');
-    -webkit-mask-position: center;
-    mask-position: center;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
     width: 28px;
     height: 24px;
+    object-fit: contain;
 }
+
+    /* For SVG logos that need masking */
+    .header-logo.mask-logo {
+        background-color: currentColor;
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+    }
+
+    /* For regular image logos */
+    .header-logo.image-logo {
+        display: block;
+    }
 
 #blazor-error-ui {
     background: inherit;

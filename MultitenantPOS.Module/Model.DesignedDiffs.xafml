@@ -1,12 +1,125 @@
-﻿<?xml version="1.0" ?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Application Title="MultitenantPOS">
   <BOModel>
     <Class Name="DevExpress.Persistent.BaseImpl.PermissionPolicy.PermissionPolicyUser" Caption="Base User" />
   </BOModel>
+  <NavigationItems>
+    <Items>
+      <Item Id="Common" Caption="Common" ImageName="puzzle" IsNewNode="True">
+        <Items IsNewNode="True">
+          <Item Id="Branch_ListView" ViewId="Branch_ListView" ObjectKey="" IsNewNode="True" />
+        </Items>
+      </Item>
+      <Item Id="Config" Caption="Config" ImageName="ModelEditor_Settings" IsNewNode="True">
+        <Items IsNewNode="True">
+          <Item Id="TaxSetup_ListView" ViewId="TaxSetup_ListView" ObjectKey="" IsNewNode="True" />
+        </Items>
+      </Item>
+      <Item Id="Default" Caption="User" ImageName="BO_Note">
+        <Items>
+          <Item Id="Branch_ListView" Removed="True" />
+          <Item Id="Category_ListView" Removed="True" />
+          <Item Id="Product_ListView" Removed="True" />
+          <Item Id="ProductAttribute_ListView" Visible="False" Removed="True" />
+          <Item Id="Sale_ListView" Removed="True" />
+          <Item Id="SaleItem_ListView" Removed="True" />
+          <Item Id="Shift_ListView" Removed="True" />
+          <Item Id="StockAlert_ListView" Removed="True" />
+          <Item Id="StockEntry_ListView" Removed="True" />
+          <Item Id="StockEntryType_ListView" Removed="True" />
+          <Item Id="TaxSetup_ListView" Removed="True" />
+          <Item Id="TenantExtended_ListView" Visible="False" />
+          <Item Id="UnitofMeasure_ListView" Removed="True" />
+        </Items>
+      </Item>
+      <Item Id="Product" Caption="Product" IsNewNode="True">
+        <Items IsNewNode="True">
+          <Item Id="Category_ListView" ViewId="Category_ListView" ObjectKey="" ImageName="BO_Category_32x32" IsNewNode="True" />
+          <Item Id="Product_ListView" ViewId="Product_ListView" ObjectKey="" ImageName="BOProduct_32x32" IsNewNode="True" />
+          <Item Id="ProductAttribute_ListView" ObjectKey="" ViewId="ProductAttribute_ListView" Visible="False" IsNewNode="True" />
+          <Item Id="UnitofMeasure_ListView" ViewId="UnitofMeasure_ListView" ObjectKey="" Caption="Unit of Measure" IsNewNode="True" />
+        </Items>
+      </Item>
+      <Item Id="Sale" Caption="Sale" ImageName="BO_Sale_Item" IsNewNode="True">
+        <Items IsNewNode="True">
+          <Item Id="Sale_ListView" ViewId="Sale_ListView" ObjectKey="" IsNewNode="True" />
+          <Item Id="SaleItem_ListView" ViewId="SaleItem_ListView" ObjectKey="" IsNewNode="True" />
+        </Items>
+      </Item>
+      <Item Id="Shift" Caption="Shift" IsNewNode="True">
+        <Items IsNewNode="True">
+          <Item Id="Shift_ListView" ViewId="Shift_ListView" ObjectKey="" IsNewNode="True" />
+        </Items>
+      </Item>
+      <Item Id="Stock" Caption="Stock" IsNewNode="True">
+        <Items IsNewNode="True">
+          <Item Id="StockAlert_ListView" ViewId="StockAlert_ListView" ObjectKey="" IsNewNode="True" />
+          <Item Id="StockEntry_ListView" ViewId="StockEntry_ListView" ObjectKey="" IsNewNode="True" />
+          <Item Id="StockEntryType_ListView" ViewId="StockEntryType_ListView" ObjectKey="" IsNewNode="True" />
+        </Items>
+      </Item>
+    </Items>
+  </NavigationItems>
   <Options>
     <LayoutManagerOptions RequiredFieldMark="*" />
   </Options>
+  <SchemaModules>
+    <SchemaModule Name="CloneObjectModule" Version="24.2.7.0" IsNewNode="True" />
+    <SchemaModule Name="SchedulerModuleBase" Version="24.2.7.0" IsNewNode="True" />
+    <SchemaModule Name="SystemModule" Version="24.2.7.0" IsNewNode="True" />
+  </SchemaModules>
   <Views>
     <ListView Id="ApplicationUser_ListView" Caption="Users" />
+    <DetailView Id="Product_DetailView">
+      <Layout>
+        <LayoutGroup Id="Main" RelativeSize="100">
+          <TabbedGroup Id="Item1" CaptionLocation="Top" Index="0" RelativeSize="41.3926499032882" IsNewNode="True">
+            <LayoutGroup Id="SimpleEditors" ShowCaption="False" Caption="Basic Info" Index="0" RelativeSize="100" IsNewNode="True">
+              <LayoutGroup Id="Product" ShowCaption="True" Direction="Horizontal" Index="0" RelativeSize="100" IsNewNode="True">
+                <LayoutGroup Id="Product_col1" ShowCaption="False" Index="0" RelativeSize="49.82896237172178" IsNewNode="True">
+                  <LayoutItem Id="Name" ViewItem="Name" Index="0" RelativeSize="24.285714285714285" IsNewNode="True" />
+                  <LayoutItem Id="SKU" ViewItem="SKU" Index="1" RelativeSize="18.571428571428573" IsNewNode="True" />
+                  <LayoutItem Id="Price" ViewItem="Price" Index="2" RelativeSize="18.571428571428573" IsNewNode="True" />
+                  <LayoutItem Id="Unit" ViewItem="Unit" Index="3" RelativeSize="38.57142857142857" IsNewNode="True" />
+                </LayoutGroup>
+                <LayoutGroup Id="Product_col2" ShowCaption="False" Index="1" RelativeSize="50.17103762827822" Caption="Product_col2" IsNewNode="True">
+                  <LayoutItem Id="Category" ViewItem="Category" Index="0" RelativeSize="24.285714285714285" IsNewNode="True" />
+                  <LayoutItem Id="IsActive" ViewItem="IsActive" Index="1" RelativeSize="18.571428571428573" IsNewNode="True" />
+                  <LayoutItem Id="Description" ViewItem="Description" Index="2" RelativeSize="57.142857142857146" IsNewNode="True" />
+                </LayoutGroup>
+              </LayoutGroup>
+            </LayoutGroup>
+            <LayoutGroup Id="ProductAttributes_Group" ShowCaption="True" Caption="Product Attributes" Index="1" RelativeSize="100" IsNewNode="True">
+              <LayoutItem Id="ProductAttributes" ViewItem="ProductAttributes" Index="0" RelativeSize="100" IsNewNode="True" />
+            </LayoutGroup>
+            <LayoutGroup Id="Item2" ShowCaption="True" CaptionLocation="Top" Direction="Vertical" Index="2" Caption="Tax" RelativeSize="100" IsNewNode="True">
+              <LayoutItem Id="VAT" ViewItem="VAT" Index="0" RelativeSize="100" IsNewNode="True" />
+            </LayoutGroup>
+          </TabbedGroup>
+          <LayoutGroup Id="SizeableEditors" RelativeSize="58.6073500967118" Caption="Description">
+            <LayoutItem Id="Description" RelativeSize="100" Removed="True" />
+          </LayoutGroup>
+          <LayoutGroup Id="ProductAttributes_Group" Removed="True" />
+          <LayoutGroup Id="SimpleEditors" RelativeSize="100" Removed="True">
+            <LayoutGroup Id="Product" RelativeSize="100">
+              <LayoutGroup Id="Product_col1" RelativeSize="49.943374858437146">
+                <LayoutItem Id="Name" Index="0" RelativeSize="7.203389830508475" />
+                <LayoutItem Id="SKU" Index="1" RelativeSize="5.508474576271187" />
+                <LayoutItem Id="Price" Index="2" RelativeSize="5.508474576271187" />
+                <LayoutItem Id="Unit" Index="3" RelativeSize="5.508474576271187" />
+                <LayoutGroup Id="ProductAttributes_Group" ShowCaption="True" Caption="Product Attributes" Index="4" RelativeSize="76.27118644067797" IsNewNode="True">
+                  <LayoutItem Id="ProductAttributes" ViewItem="ProductAttributes" Index="0" RelativeSize="100" IsNewNode="True" />
+                </LayoutGroup>
+              </LayoutGroup>
+              <LayoutGroup Id="Product_col2" RelativeSize="50.056625141562854">
+                <LayoutItem Id="Category" RelativeSize="7.203389830508475" />
+                <LayoutItem Id="IsActive" RelativeSize="5.508474576271187" />
+                <LayoutItem Id="Tax" RelativeSize="87.28813559322033" />
+              </LayoutGroup>
+            </LayoutGroup>
+          </LayoutGroup>
+        </LayoutGroup>
+      </Layout>
+    </DetailView>
   </Views>
 </Application>
