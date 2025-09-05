@@ -13,6 +13,7 @@ using DevExpress.Persistent.BaseImpl;
 using DevExpress.Persistent.BaseImpl.MultiTenancy;
 using DevExpress.Persistent.BaseImpl.PermissionPolicy;
 using DevExpress.Xpo;
+using MultitenantPOS.Module.Controllers;
 using System.ComponentModel;
 
 namespace MultitenantPOS.Module;
@@ -34,6 +35,7 @@ public sealed class MultitenantPOSModule : ModuleBase {
         AdditionalExportedTypes.Add(typeof(DevExpress.Persistent.BaseImpl.Event));
         AdditionalExportedTypes.Add(typeof(DevExpress.Persistent.BaseImpl.Resource));
         AdditionalExportedTypes.Add(typeof(DevExpress.Persistent.BaseImpl.HCategory));
+        AdditionalExportedTypes.Add(typeof(UploadFileParameters));
         RequiredModuleTypes.Add(typeof(DevExpress.ExpressApp.SystemModule.SystemModule));
         RequiredModuleTypes.Add(typeof(DevExpress.ExpressApp.Security.SecurityModule));
         RequiredModuleTypes.Add(typeof(DevExpress.ExpressApp.AuditTrail.AuditTrailModule));
